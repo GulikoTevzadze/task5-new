@@ -44,7 +44,7 @@ export default function Home() {
 
   useEffect(() => {
     updateUrl();
-  }, [seed, region, avgLikes, avgReviews, updateUrl]);
+  }, [seed, region, avgLikes, avgReviews]);
 
   useEffect(() => {
     fetchBooks(1, true);
@@ -63,7 +63,7 @@ export default function Home() {
         pageSize: pageToFetch === 1 ? 20 : 10
       });
 
-      const response = await fetch(`/api/books?${params.toString()}`);
+      const response = await fetch(`/api/book?${params.toString()}`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch books');

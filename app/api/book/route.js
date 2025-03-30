@@ -1,4 +1,4 @@
-import createBookGenerator from '"@/lib/bookGenerator"';
+import createBookGenerator from '@/lib/bookGenerator';
 import { NextResponse } from 'next/server';
 
 export async function GET(req) {

@@ -35,8 +35,8 @@ export default function BookGallery({ books, onLoadMore, isLoading, hasMore }) {
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {books.map((book) => (
-          <Card key={book.id} className="overflow-hidden flex flex-col h-full">
+        {books.map((book, index) => (
+          <Card key={`${book.id}-${index}`} className="overflow-hidden flex flex-col h-full">
             <div className="relative aspect-[2/3] w-full">
               <BookCover book={book} className="absolute inset-0" />
             </div>
@@ -56,10 +56,6 @@ export default function BookGallery({ books, onLoadMore, isLoading, hasMore }) {
                 <div className="flex items-center">
                   <ThumbsUp className="w-3 h-3 mr-1" />
                   <span>{book.likes}</span>
-                </div>
-                <div className="flex items-center">
-                  <BookOpen className="w-3 h-3 mr-1" />
-                  <span>{book.pages} p.</span>
                 </div>
                 <div>
                   <span>${book.price}</span>
@@ -141,19 +137,19 @@ export default function BookGallery({ books, onLoadMore, isLoading, hasMore }) {
                         <h4 className="text-sm font-semibold mb-4">Reviews ({book.reviews.length})</h4>
                         <ScrollArea className="h-64">
                           <div className="space-y-4">
-                            {book.reviews.map((review, index) => (
-                              <div key={index} className="space-y-2">
+                            {book.reviews.map((review, reviewIndex) => (
+                              <div key={`${book.id}-review-${reviewIndex}`} className="space-y-2">
                                 <div className="flex justify-between items-center">
                                   <div className="font-medium text-sm">{review.reviewer}</div>
                                   <div className="flex items-center">
                                     {Array.from({ length: review.rating }, (_, i) => (
-                                      <Star key={i} className="h-4 w-4 fill-primary text-primary" />
+                                      <Star key={`star-${i}`} className="h-4 w-4 fill-primary text-primary" />
                                     ))}
                                     <span className="text-sm text-muted-foreground ml-2">{review.date}</span>
                                   </div>
                                 </div>
                                 <p className="text-sm">{review.text}</p>
-                                {index < book.reviews.length - 1 && <Separator className="my-2" />}
+                                {reviewIndex < book.reviews.length - 1 && <Separator className="my-2" />}
                               </div>
                             ))}
                           </div>
@@ -176,7 +172,7 @@ export default function BookGallery({ books, onLoadMore, isLoading, hasMore }) {
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full">
               {[...Array(4)].map((_, i) => (
-                <Card key={i} className="overflow-hidden">
+                <Card key={`skeleton-${i}`} className="overflow-hidden">
                   <Skeleton className="aspect-[2/3] w-full" />
                   <div className="p-4 space-y-3">
                     <Skeleton className="h-4 w-3/4" />
@@ -201,4 +197,4 @@ export default function BookGallery({ books, onLoadMore, isLoading, hasMore }) {
       )}
     </div>
   );
-};
+}
