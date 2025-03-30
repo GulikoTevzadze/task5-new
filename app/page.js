@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import SettingsPanel from '@/components/SettingsPanel.jsx';
 import BookTable from '@/components/BookTable';
@@ -9,17 +9,26 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CsvExport from '@/components/CsvExport';
 
 export default function Home() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <HomeContent />
+    </Suspense>
+  );
+}
+
+function HomeContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const [seed, setSeed] = useState(searchParams.get('seed') || 'default-seed');
-  const [region, setRegion] = useState(searchParams.get('region') || 'en_US');
-  const [avgLikes, setAvgLikes] = useState(
-    parseFloat(searchParams.get('avgLikes') || '3.5')
-  );
-  const [avgReviews, setAvgReviews] = useState(
-    parseFloat(searchParams.get('avgReviews') || '2.0')
-  );
+  const initialSeed = useMemo(() => searchParams.get('seed') || 'default-seed', [searchParams]);
+  const initialRegion = useMemo(() => searchParams.get('region') || 'en_US', [searchParams]);
+  const initialAvgLikes = useMemo(() => parseFloat(searchParams.get('avgLikes') || '3.5'), [searchParams]);
+  const initialAvgReviews = useMemo(() => parseFloat(searchParams.get('avgReviews') || '2.0'), [searchParams]);
+
+  const [seed, setSeed] = useState(initialSeed);
+  const [region, setRegion] = useState(initialRegion);
+  const [avgLikes, setAvgLikes] = useState(initialAvgLikes);
+  const [avgReviews, setAvgReviews] = useState(initialAvgReviews);
   const [viewMode, setViewMode] = useState('table');
   const [books, setBooks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,19 +49,10 @@ export default function Home() {
     params.set('avgLikes', avgLikes.toString());
     params.set('avgReviews', avgReviews.toString());
     router.replace(`?${params.toString()}`);
-  }, [seed, region, avgLikes, avgReviews, router, searchParams]);
+  }, [searchParams, seed, region, avgLikes, avgReviews, router]);
 
-  useEffect(() => {
-    updateUrl();
-  }, [seed, region, avgLikes, avgReviews]);
-
-  useEffect(() => {
-    fetchBooks(1, true);
-  }, [seed, region, avgLikes, avgReviews]);
-
-  const fetchBooks = async (pageToFetch, reset = false) => {
+  const fetchBooks = useCallback(async (pageToFetch, reset = false) => {
     setIsLoading(true);
-
     try {
       const params = new URLSearchParams({
         seed,
@@ -64,25 +64,24 @@ export default function Home() {
       });
 
       const response = await fetch(`/api/book?${params.toString()}`);
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch books');
-      }
+      if (!response.ok) throw new Error('Failed to fetch books');
 
       const data = await response.json();
 
-      if (data.books.length === 0) {
-        setHasMore(false);
-      } else {
-        setBooks(prev => reset ? data.books : [...prev, ...data.books]);
-        setPage(pageToFetch);
-      }
+      setBooks(prev => (reset ? data.books : [...prev, ...data.books]));
+      setPage(pageToFetch);
+      setHasMore(data.books.length > 0);
     } catch (err) {
       setError(err.message);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [seed, region, avgLikes, avgReviews]);
+
+  useEffect(() => {
+    updateUrl();
+    fetchBooks(1, true);
+  }, [updateUrl, fetchBooks]);
 
   const handleLoadMore = () => {
     if (!isLoading && hasMore) {
